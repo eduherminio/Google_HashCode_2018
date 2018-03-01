@@ -77,7 +77,8 @@ namespace Project
                     new Position(row, col),
                     new Position(endrow, endcol),
                     start,
-                    end));
+                    end,
+                    TotalSimulationSteps));
 
                 ++rideId;
             }
@@ -86,6 +87,12 @@ namespace Project
                 throw new ParsingException();
 
             RideList = RideList.OrderBy(ride => ride.Distance).ToList();
+
+            for (int i = 0; i < VehicleList.Count; ++i)
+            {
+                RelationShiplist.Add(new Relationship(VehicleList[i].Id));
+
+            }
         }
 
         private void PrintData()
@@ -98,6 +105,8 @@ namespace Project
                 string line = string.Empty;
 
                 line += VehicleList[i].SuccessfullRides.Count.ToString() + " ";
+
+                VehicleList[i].SuccessfullRides.OrderBy(r => r.RealStart);
 
                 foreach (var ride in VehicleList[i].SuccessfullRides)
                 {
@@ -120,7 +129,7 @@ namespace Project
         long TotalSimulationSteps { get; set; }
 
         List<Trip> DoneTrips = new List<Trip>();
-
+        List<Relationship> RelationShiplist = new List<Relationship>();
 
         private void ExampleReproduction()
         {
@@ -152,31 +161,107 @@ namespace Project
 
 
 
-            Simulation();
+            Algorithm();
 
 
             // Update vehicle pos after each ride
         }
 
-        private void Simulation()
-        {
-            int currenStep = 0;
-
-            while (currenStep < TotalSimulationSteps)
-            {
-
-
-
-
-                currenStep++;
-            }
-        }
 
         private void Algorithm()
         {
-            foreach (var vechile in VehicleList.Where(veh => veh.Free))
+            long currentStep = 0;
+
+            while (currentStep < TotalSimulationSteps)
             {
-                RideList.First().
+                // UpdateVehicles
+                foreach (var rel in RelationShiplist)
+                {
+                    if (rel.StepWhereVehicleWillBeFree == currentStep)
+                    {
+                        rel.StepWhereVehicleWillBeFree = -1;
+
+                        Vehicle vehicleToUpdate = VehicleList.FirstOrDefault(v => v.Id == rel.VehicleId);
+                        if (vehicleToUpdate.Free == true)
+                            throw new Exception();
+
+                        vehicleToUpdate.Free = true;
+                        vehicleToUpdate.RealPosition = vehicleToUpdate.SuccessfullRides.Last().EndPosition;
+                    }
+
+                }
+
+
+                /// Order by earliest time
+                // HERE
+                while (true)
+                {
+                    long initialRides = RideList.Count;
+                    if (initialRides == 0)
+                        return;
+                    EvaluateVehiclesByBestRideBasedBonus(currentStep);
+                    if (RideList.Count == initialRides) // El primer viaje al que los intenta asignar no es asignable por ning´n vehículo
+                    {
+                        Ride ride = RideList.FirstOrDefault(r => r.EarlyStart == currentStep);
+                        if (ride == null)
+                            ride = RideList.First();
+
+                        ride.auxEvaluated = true;
+
+                        //EvaluateVehiclesByBestRideBasedBonus(currentStep);
+                    }
+                    else
+                    {
+                        foreach (var ride in RideList)
+                            ride.auxEvaluated = false;
+                    }
+
+                    if (RideList.FirstOrDefault(ride => ride.auxEvaluated == false) == null)
+                    {
+                        foreach (var ride in RideList)
+                            ride.auxEvaluated = false;
+
+                        break;
+                    }
+                }
+
+                currentStep++;
+            }
+        }
+
+        private void EvaluateVehiclesByBestRideBasedBonus(long currentStep)
+        {
+            if (RideList.Count == 0)
+                return;
+            VehicleList = VehicleList.OrderBy(v => v.CalculateDistanceToAPoint(RideList.First().InitialPosition)).ToList();
+            foreach (var vehicle in VehicleList.Where(veh => veh.Free))  // Free implies free
+            {
+                // modify ride
+                Ride ride =
+                    RideList.FirstOrDefault(r => r.EarlyStart == currentStep
+                    && r.auxEvaluated == false);   // first ofdefe devuelve null ???
+
+                if (ride == null)
+                    ride = RideList.FirstOrDefault(r => r.auxEvaluated == false);
+
+                if (ride == null)
+                    return;
+
+                if (ride.IsOnTimeOrAfterEarlyStart(currentStep))
+                {
+                    ride.Done = true;
+                    ride.RealStart = currentStep;
+                    //                                              // HOW TO IMPROVE ALGORITHM
+                    if (currentStep == ride.EarlyStart)
+                        ride.DoneInEarlyStart = true;
+                    // 
+                    RideList.Remove(ride);
+                    vehicle.SuccessfullRides.Add(ride);
+                    vehicle.Free = false;
+
+                    Relationship rel = RelationShiplist.SingleOrDefault(relation => relation.VehicleId == vehicle.Id);
+                    rel.StepWhereVehicleWillBeFree = currentStep + ride.Distance;
+                }
             }
         }
     }

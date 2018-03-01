@@ -17,5 +17,10 @@ namespace Project.Model
 
         public bool Free { get; set; }
         public List<Ride> SuccessfullRides { get; set; } = new List<Ride>();
+
+        public long CalculateDistanceToAPoint(Position position)
+        {
+            return Math.Abs(RealPosition.X - position.X) + Math.Abs(RealPosition.Y - position.Y);
+        }
     }
 }

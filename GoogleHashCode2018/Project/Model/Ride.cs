@@ -11,22 +11,28 @@ namespace Project.Model
         public Position InitialPosition { get; set; }
         public Position EndPosition { get; set; }
 
+
+        public long RealStart { get; set; }
         public long Distance { get; set; }
 
         public long Bonus { get; set; }
 
         public long EarlyStart { get; set; }
         public long LatestEnd { get; set; }
+        public long TotalSimulationSteps { get; set; }
 
         public bool Done { get; set; }
         public bool DoneInEarlyStart { get; set; }
 
-        public Ride(long id, long bonus, Position init, Position endpos, long start, long end)
+        public bool auxEvaluated { get; set; }
+
+        public Ride(long id, long bonus, Position init, Position endpos, long start, long end, long totalsteps)
         {
             Id = id;
             Bonus = bonus;
             InitialPosition = init;
             EndPosition = endpos;
+            TotalSimulationSteps = totalsteps;
 
             EarlyStart = start;
             LatestEnd = end;
@@ -38,6 +44,7 @@ namespace Project.Model
 
             Done = false;
             DoneInEarlyStart = false;
+            auxEvaluated = false;
         }
 
         public long CalculateScore()
@@ -52,14 +59,17 @@ namespace Project.Model
         }
 
 
-        public bool IsOnTime(long startStep, long totalSimulationSteps)
+        public bool IsOnTimeOrAfterEarlyStart(long startStep)
         {
             bool result = true;
 
-            if ( !(startStep + this.Distance <= totalSimulationSteps))
+            if (startStep + this.Distance > TotalSimulationSteps)
                 result = false;
 
-            if (!(startStep + this.Distance <= this.LatestEnd))
+            if (startStep + this.Distance > this.LatestEnd)
+                result = false;
+
+            if (startStep < EarlyStart)
                 result = false;
             // earliesttime
 
