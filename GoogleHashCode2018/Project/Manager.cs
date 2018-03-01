@@ -14,14 +14,15 @@ namespace Project
         private readonly string _inputPath = "./Samples/";
         private readonly string _outputPath = "./Outputs/";
 
-        private readonly string _inputFileName = "a_example.in";
+        private readonly string _inputFileName = "a_example";
         private readonly string _outputFileName = null;
 
         private ParsedFile _file;
 
         public Manager()
         {
-            _outputFileName = "output_" + _inputFileName;
+            _outputFileName = "output_" + _inputFileName + ".out";
+            _inputFileName += ".in";
             _inputPath += _inputFileName;
             _outputPath += _outputFileName;
         }
@@ -46,13 +47,13 @@ namespace Project
 
             Grid = new Grid(gridRow, gridCol);
 
-            _n_vehicles = firstLine.NextElement<long>();
+            long n_vehicles = firstLine.NextElement<long>();
 
-            for (int i = 0; i < _n_vehicles; ++i)
+            for (int i = 0; i < n_vehicles; ++i)
                 VehicleList.Add(new Vehicle(i));
 
             long n_rides = firstLine.NextElement<long>();
-            Bonus = firstLine.NextElement<long>();
+            long bonus = firstLine.NextElement<long>();
             nSteps = firstLine.NextElement<long>();
 
             long rideId = 0;
@@ -72,6 +73,7 @@ namespace Project
 
                 RideList.Add(new Ride(
                     rideId,
+                    bonus,
                     new Position(row, col),
                     new Position(endrow, endcol),
                     start,
@@ -113,23 +115,35 @@ namespace Project
         List<Vehicle> VehicleList { get; set; } = new List<Vehicle>();
         List<Ride> RideList { get; set; } = new List<Ride>();
         Grid Grid { get; set; }
-        long _n_vehicles;
-        long Bonus { get; set; }
         long nSteps { get; set; }
 
         private void ExampleReproduction()
         {
             VehicleList.First().SuccessfullRides.Add(RideList.SingleOrDefault(ride => ride.Id == 0));
+            VehicleList.First().SuccessfullRides.First().Done = true;
+            VehicleList.First().SuccessfullRides.First().DoneInEarlyStart = true;
 
             VehicleList.Last().SuccessfullRides.Add(RideList.SingleOrDefault(ride => ride.Id == 2));
+            VehicleList.Last().SuccessfullRides.First().Done = true;
             VehicleList.Last().SuccessfullRides.Add(RideList.SingleOrDefault(ride => ride.Id == 1));
+            VehicleList.Last().SuccessfullRides.Last().Done = true;
+
+            long bonus = CalculateScore();
+        }
+
+        private long CalculateScore()
+        {
+            long score = 0;
+            foreach (var vehicle in VehicleList)
+                foreach (var ride in vehicle.SuccessfullRides)
+                    score += ride.CalculateScore();
+
+            return score;
         }
 
         private void ProcessData()
         {
-            //ExampleReproduction();
-
-
+            ExampleReproduction();
         }
     }
 }

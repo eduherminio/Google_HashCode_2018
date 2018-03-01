@@ -16,7 +16,6 @@ namespace Project.Model
         public Position RealPosition { get; set; }
 
         public bool Free { get; set; }
-
         public List<Ride> SuccessfullRides { get; set; } = new List<Ride>();
     }
 }
