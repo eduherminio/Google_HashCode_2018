@@ -8,8 +8,6 @@ namespace Project
         {
             Manager instance = new Manager();
             instance.Run();
-
-            Console.ReadKey();
         }
     }
 }
