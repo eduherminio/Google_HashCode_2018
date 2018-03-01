@@ -14,7 +14,7 @@ namespace Project
         private readonly string _inputPath = "./Samples/";
         private readonly string _outputPath = "./Outputs/";
 
-        private readonly string _inputFileName = "a_example";
+        private readonly string _inputFileName = "b_should_be_easy";
         private readonly string _outputFileName = null;
 
         private ParsedFile _file;
@@ -202,25 +202,31 @@ namespace Project
                     EvaluateVehiclesByBestRideBasedBonus(currentStep);
                     if (RideList.Count == initialRides) // El primer viaje al que los intenta asignar no es asignable por ning´n vehículo
                     {
-                        Ride ride = RideList.FirstOrDefault(r => r.EarlyStart == currentStep);
+                        //return;
+                        Ride ride = RideList.FirstOrDefault(r => r.EarlyStart == currentStep
+                                            && r.auxEvaluated == false);   // first ofdefe devuelve null ???);
                         if (ride == null)
-                            ride = RideList.First();
-
+                            ride = RideList.FirstOrDefault(r => r.auxEvaluated == false);
+                        if (ride == null)
+                            return;
                         ride.auxEvaluated = true;
 
                         //EvaluateVehiclesByBestRideBasedBonus(currentStep);
                     }
                     else
                     {
-                        foreach (var ride in RideList)
-                            ride.auxEvaluated = false;
+                        //foreach (var ride in RideList)
+                        //    ride.auxEvaluated = false;
                     }
 
-                    if (RideList.FirstOrDefault(ride => ride.auxEvaluated == false) == null)
+                    //if (RideList.FirstOrDefault(ride => ride.auxEvaluated == false) == null)
+
+                        long n = RideList.Where(r => r.auxEvaluated == true).Count();
+                    if(n >= 0.01*RideList.Count)
                     {
                         foreach (var ride in RideList)
                             ride.auxEvaluated = false;
-
+                        currentStep++;
                         break;
                     }
                 }
