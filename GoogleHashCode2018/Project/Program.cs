@@ -6,7 +6,10 @@ namespace Project
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Manager instance = new Manager();
+            instance.Run();
+
+            Console.ReadKey();
         }
     }
 }
