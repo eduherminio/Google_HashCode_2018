@@ -54,7 +54,7 @@ namespace Project
 
             long n_rides = firstLine.NextElement<long>();
             long bonus = firstLine.NextElement<long>();
-            nSteps = firstLine.NextElement<long>();
+            TotalSimulationSteps = firstLine.NextElement<long>();
 
             long rideId = 0;
             while (!_file.Empty)
@@ -84,6 +84,8 @@ namespace Project
 
             if (n_rides != RideList.Count)
                 throw new ParsingException();
+
+            RideList = RideList.OrderBy(ride => ride.Distance).ToList();
         }
 
         private void PrintData()
@@ -115,7 +117,10 @@ namespace Project
         List<Vehicle> VehicleList { get; set; } = new List<Vehicle>();
         List<Ride> RideList { get; set; } = new List<Ride>();
         Grid Grid { get; set; }
-        long nSteps { get; set; }
+        long TotalSimulationSteps { get; set; }
+
+        List<Trip> DoneTrips = new List<Trip>();
+
 
         private void ExampleReproduction()
         {
@@ -143,7 +148,36 @@ namespace Project
 
         private void ProcessData()
         {
-            ExampleReproduction();
+            //ExampleReproduction();
+
+
+
+            Simulation();
+
+
+            // Update vehicle pos after each ride
+        }
+
+        private void Simulation()
+        {
+            int currenStep = 0;
+
+            while (currenStep < TotalSimulationSteps)
+            {
+
+
+
+
+                currenStep++;
+            }
+        }
+
+        private void Algorithm()
+        {
+            foreach (var vechile in VehicleList.Where(veh => veh.Free))
+            {
+                RideList.First().
+            }
         }
     }
 }

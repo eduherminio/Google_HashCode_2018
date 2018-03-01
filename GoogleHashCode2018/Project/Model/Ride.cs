@@ -32,6 +32,10 @@ namespace Project.Model
             LatestEnd = end;
 
             Distance = Math.Abs(InitialPosition.X - EndPosition.X) + Math.Abs(InitialPosition.Y - EndPosition.Y);
+
+            if (Distance <= 1)
+                throw new Exception();
+
             Done = false;
             DoneInEarlyStart = false;
         }
@@ -45,6 +49,22 @@ namespace Project.Model
             return Done
                 ? Distance + realBonus
                 : 0;
+        }
+
+
+        public bool IsOnTime(long startStep, long totalSimulationSteps)
+        {
+            bool result = true;
+
+            if ( !(startStep + this.Distance <= totalSimulationSteps))
+                result = false;
+
+            if (!(startStep + this.Distance <= this.LatestEnd))
+                result = false;
+            // earliesttime
+
+
+            return result;
         }
     }
 }
