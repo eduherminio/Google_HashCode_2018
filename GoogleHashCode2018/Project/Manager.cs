@@ -158,19 +158,25 @@ namespace Project
                     if (optimalRide != null && optimalRide.Done == false)
                         existingOptimal = optimalRide;
 
-                    // Main room for improvement : ride selection taking into account distance vehicle-ride init, etc.
                     Ride ride = null;
+                    // Main room for improvement : ride selection taking into account distance vehicle-ride init, etc.
 
-                    if (_inputFileName == "c_no_hurry.in")
-                    {
-                        ride = existingOptimal ?? RideList.Aggregate((minItem, nextItem) => v.CalculateDistanceToAPoint(minItem.InitialPosition) < v.CalculateDistanceToAPoint(nextItem.InitialPosition) ? minItem : nextItem);
-                    }
+                    //if (_inputFileName == "c_no_hurry.in")
+                    //{
+                    //    ride = /*existingOptimal ??*/ MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
+                    //}
+                    //else
+                    //{
+                    //    ride = existingOptimal;
+                    //}
+
+
+                    if (currentStep <= 0.75 * TotalSimulationSteps)
+                        ride = existingOptimal ?? RideList[rnd.Next(0, RideList.Count - 1)];
                     else
-                    {
-                        ride = existingOptimal;
-                    }
+                        ride = existingOptimal ?? MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
 
-                    ride = ride ?? RideList[rnd.Next(0, RideList.Count - 1)];   // Needed?
+                    ride = ride ?? RideList[rnd.Next(0, RideList.Count - 1)];
 
                     if (ride != null && true == ride.IsOnTimeOrAfterEarlyStart(currentStep + v.CalculateDistanceToAPoint(ride.InitialPosition)))
                     {
