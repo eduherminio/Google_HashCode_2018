@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Project.Model
 {
@@ -9,19 +7,23 @@ namespace Project.Model
         public long Id { get; set; }
 
         public Position InitialPosition { get; set; }
+
         public Position EndPosition { get; set; }
 
-
         public long RealStart { get; set; }
+
         public long Distance { get; set; }
 
         public long Bonus { get; set; }
 
         public long EarlyStart { get; set; }
+
         public long LatestEnd { get; set; }
+
         public long TotalSimulationSteps { get; set; }
 
         public bool Done { get; set; }
+
         public bool DoneInEarlyStart { get; set; }
 
 
@@ -69,8 +71,6 @@ namespace Project.Model
 
             if (startStep < EarlyStart)
                 result = false;
-            // earliesttime
-
 
             return result;
         }

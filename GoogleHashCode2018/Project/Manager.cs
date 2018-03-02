@@ -11,10 +11,15 @@ namespace Project
 {
     public class Manager
     {
+        // Files data
         private readonly string _inputPath = "./Samples/";
         private readonly string _outputPath = "./Outputs/";
-
         private readonly string _inputFileName = "e_high_bonus";
+
+        // Problem data
+        List<Vehicle> VehicleList { get; set; } = new List<Vehicle>();
+        List<Ride> RideList { get; set; } = new List<Ride>();
+        long TotalSimulationSteps { get; set; }
 
         public Manager(string inputFileName = null)
         {
@@ -31,7 +36,6 @@ namespace Project
         {
             LoadData();
 
-            //ExampleReproduction();
             ProcessData();
 
             PrintData();
@@ -119,22 +123,6 @@ namespace Project
             }
         }
 
-        List<Vehicle> VehicleList { get; set; } = new List<Vehicle>();
-
-        List<Ride> RideList { get; set; } = new List<Ride>();
-
-
-        long TotalSimulationSteps { get; set; }
-
-        private long CalculateScore()
-        {
-            long score = 0;
-            foreach (var vehicle in VehicleList)
-                foreach (var ride in vehicle.SuccessfullRides)
-                    score += ride.CalculateScore();
-
-            return score;
-        }
 
         private void ProcessData()
         {
@@ -162,19 +150,20 @@ namespace Project
                     if (RideList.Count == 0)
                         break;
 
-                    // Since optimalRide is declared before entering the foreach, null comprobation is not enough and .Done needs to be used
+                    // Since optimalRide is declared before entering foreach, null comprobation is not enough and .Done needs to checked too
                     Ride existingOptimal = null;
 
                     if (optimalRide != null && optimalRide.Done == false)
                         existingOptimal = optimalRide;
 
-                    Ride ride = existingOptimal ?? RideList[rnd.Next(0, RideList.Count - 1)];  // Room for improvement
+                    Ride ride = existingOptimal ?? RideList[rnd.Next(0, RideList.Count - 1)];
+                    // Main room for improvement : ride selection taking into account distance vehicle-ride init, etc.
                     if (ride != null && true == ride.IsOnTimeOrAfterEarlyStart(currentStep + v.CalculateDistanceToAPoint(ride.InitialPosition)))
                     {
                         RideList.Remove(ride);
                         ride.Distance += v.CalculateDistanceToAPoint(ride.InitialPosition);
                         ride.Done = true;
-                        ride.DoneInEarlyStart = currentStep == ride.EarlyStart;     // Room for improvement
+                        ride.DoneInEarlyStart = currentStep == ride.EarlyStart;
                         v.Free = false;
                         v.StepWhenWillBeFee = currentStep + ride.Distance;  // Including trip to position
 

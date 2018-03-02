@@ -1,11 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Project.Model
 {
     public class Vehicle
     {
+        public long Id { get; set; }
+
+        public Position RealPosition { get; set; }
+
+        public bool Free { get; set; }
+
+        public long StepWhenWillBeFee { get; set; }
+
+        public List<Ride> SuccessfullRides { get; set; } = new List<Ride>();
+
         public Vehicle(long id, Position pos = null)
         {
             Id = id;
@@ -13,12 +22,6 @@ namespace Project.Model
             Free = true;
             StepWhenWillBeFee = -1;
         }
-        public long Id { get; set; }
-        public Position RealPosition { get; set; }
-
-        public bool Free { get; set; }
-        public long StepWhenWillBeFee { get; set; }
-        public List<Ride> SuccessfullRides { get; set; } = new List<Ride>();
 
         public long CalculateDistanceToAPoint(Position position)
         {
