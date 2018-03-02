@@ -11,11 +11,13 @@ namespace Project.Model
             Id = id;
             RealPosition = pos ?? new Position(0, 0);
             Free = true;
+            StepWhenWillBeFee = -1;
         }
         public long Id { get; set; }
         public Position RealPosition { get; set; }
 
         public bool Free { get; set; }
+        public long StepWhenWillBeFee { get; set; }
         public List<Ride> SuccessfullRides { get; set; } = new List<Ride>();
 
         public long CalculateDistanceToAPoint(Position position)

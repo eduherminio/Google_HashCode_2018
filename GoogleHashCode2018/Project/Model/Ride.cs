@@ -24,7 +24,6 @@ namespace Project.Model
         public bool Done { get; set; }
         public bool DoneInEarlyStart { get; set; }
 
-        public bool auxEvaluated { get; set; }
 
         public Ride(long id, long bonus, Position init, Position endpos, long start, long end, long totalsteps)
         {
@@ -44,7 +43,6 @@ namespace Project.Model
 
             Done = false;
             DoneInEarlyStart = false;
-            auxEvaluated = false;
         }
 
         public long CalculateScore()
