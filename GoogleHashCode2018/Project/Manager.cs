@@ -153,9 +153,10 @@ namespace Project
                     veh.RealPosition = veh.SuccessfullRides.Last().EndPosition;
                 }
 
-                //VehicleList.OrderBy(v => v.CalculateDistanceToAPoint(RideList.First().InitialPosition));
                 Random rnd = new Random();
                 Ride optimalRide = RideList.FirstOrDefault(r => r.EarlyStart == currentStep);
+                if (optimalRide != null)
+                    VehicleList = VehicleList.OrderBy(v => v.CalculateDistanceToAPoint(optimalRide.InitialPosition)).ToList();
                 foreach (Vehicle v in VehicleList.Where(v => v.Free).ToList())
                 {
                     if (RideList.Count == 0)
