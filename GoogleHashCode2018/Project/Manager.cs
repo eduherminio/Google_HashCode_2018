@@ -47,8 +47,6 @@ namespace Project
             VehicleList.Last().SuccessfullRides.Add(RideList.SingleOrDefault(ride => ride.Id == 1));
             VehicleList.Last().SuccessfullRides.Last().Done = true;
 
-            long bonus = CalculateScore();
-
             PrintData();
         }
         public void Run()
@@ -110,8 +108,6 @@ namespace Project
 
             if (n_rides != RideList.Count)
                 throw new ParsingException();
-
-            RideList = RideList.OrderBy(ride => ride.Distance).ToList();    // Room for improvement
         }
 
         private void PrintData()
@@ -146,6 +142,8 @@ namespace Project
 
         private void ProcessData()
         {
+            RideList = RideList.OrderBy(ride => ride.Distance).ToList();    // Room for improvement
+
             long currentStep = 0;
 
             while (currentStep < TotalSimulationSteps)
