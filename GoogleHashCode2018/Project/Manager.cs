@@ -131,15 +131,17 @@ namespace Project
             while (currentStep < TotalSimulationSteps)
             {
                 // UpdateVehicles
-                foreach (var veh in VehicleList.Where(v => v.StepWhenWillBeFee == currentStep).ToList())
-                {
-                    if (veh.Free == true)
-                        throw new Exception();
+                VehicleList.Where(v => v.StepWhenWillBeFee == currentStep)
+                    .Select(veh =>
+                    {
+                        if (veh.Free == true)
+                            throw new Exception();
 
-                    veh.Free = true;
-                    veh.StepWhenWillBeFee = -1;
-                    veh.RealPosition = veh.SuccessfullRides.Last().EndPosition;
-                }
+                        veh.Free = true;
+                        veh.StepWhenWillBeFee = -1;
+                        veh.RealPosition = veh.SuccessfullRides.Last().EndPosition;
+                        return veh;
+                    }).ToList();
 
                 Random rnd = new Random();
                 Ride optimalRide = RideList.FirstOrDefault(r => r.EarlyStart == currentStep);
