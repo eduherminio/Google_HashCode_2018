@@ -169,12 +169,36 @@ namespace Project
                     //{
                     //    ride = existingOptimal;
                     //}
+                    switch (_inputFileName)
+                    {
+                        case ("b_should_be_easy.in"):
+                            ride = existingOptimal ?? RideList[rnd.Next(0, RideList.Count - 1)];
+                            break;
+                        case ("c_no_hurry.in"):
+                            ride = existingOptimal ?? MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
+                            break;
+                        case ("d_metropolis.in"):
+                            {
+                                ride = currentStep <= 0.75 * TotalSimulationSteps
+                                    ? existingOptimal ?? RideList[rnd.Next(0, RideList.Count - 1)]
+                                    : existingOptimal ?? MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
+                            }
+                            break;
+                        case ("e_high_bonus.in"):
+                            {
+                                ride = currentStep <= 0.75 * TotalSimulationSteps
+                                    ? existingOptimal ?? RideList[rnd.Next(0, RideList.Count - 1)]
+                                    : existingOptimal ?? MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
+                            }
+                            break;
+                        default:
+                            throw new Exception();
+                    }
 
-
-                    if (currentStep <= 0.75 * TotalSimulationSteps)
-                        ride = existingOptimal ?? RideList[rnd.Next(0, RideList.Count - 1)];
-                    else
-                        ride = existingOptimal ?? MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
+                    //if (currentStep <= 0.75 * TotalSimulationSteps)
+                    //    ride = existingOptimal ?? RideList[rnd.Next(0, RideList.Count - 1)];
+                    //else
+                    //    ride = existingOptimal ?? MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
 
                     ride = ride ?? RideList[rnd.Next(0, RideList.Count - 1)];
 
