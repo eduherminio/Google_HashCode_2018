@@ -158,8 +158,20 @@ namespace Project
                     if (optimalRide != null && optimalRide.Done == false)
                         existingOptimal = optimalRide;
 
-                    Ride ride = existingOptimal ?? RideList[rnd.Next(0, RideList.Count - 1)];
                     // Main room for improvement : ride selection taking into account distance vehicle-ride init, etc.
+                    Ride ride = null;
+
+                    if (_inputFileName == "c_no_hurry.in")
+                    {
+                        ride = existingOptimal ?? RideList.Aggregate((minItem, nextItem) => v.CalculateDistanceToAPoint(minItem.InitialPosition) < v.CalculateDistanceToAPoint(nextItem.InitialPosition) ? minItem : nextItem);
+                    }
+                    else
+                    {
+                        ride = existingOptimal;
+                    }
+
+                    ride = ride ?? RideList[rnd.Next(0, RideList.Count - 1)];   // Needed?
+
                     if (ride != null && true == ride.IsOnTimeOrAfterEarlyStart(currentStep + v.CalculateDistanceToAPoint(ride.InitialPosition)))
                     {
                         RideList.Remove(ride);
