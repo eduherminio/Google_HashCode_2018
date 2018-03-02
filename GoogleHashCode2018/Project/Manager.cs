@@ -16,6 +16,8 @@ namespace Project
         private readonly string _outputPath = "./Outputs/";
         private readonly string _inputFileName = "e_high_bonus";
 
+        static Random _rnd = new Random();
+
         // Problem data
         List<Vehicle> VehicleList { get; set; } = new List<Vehicle>();
         List<Ride> RideList { get; set; } = new List<Ride>();
@@ -32,6 +34,23 @@ namespace Project
             _outputPath += _outputFileName;
         }
 
+        public void ExampleReproduction()
+        {
+            LoadData();
+
+            VehicleList.First().SuccessfullRides.Add(RideList.SingleOrDefault(ride => ride.Id == 0));
+            VehicleList.First().SuccessfullRides.First().Done = true;
+            VehicleList.First().SuccessfullRides.First().DoneInEarlyStart = true;
+
+            VehicleList.Last().SuccessfullRides.Add(RideList.SingleOrDefault(ride => ride.Id == 2));
+            VehicleList.Last().SuccessfullRides.First().Done = true;
+            VehicleList.Last().SuccessfullRides.Add(RideList.SingleOrDefault(ride => ride.Id == 1));
+            VehicleList.Last().SuccessfullRides.Last().Done = true;
+
+            long bonus = CalculateScore();
+
+            PrintData();
+        }
         public void Run()
         {
             LoadData();
@@ -97,6 +116,7 @@ namespace Project
 
         private void PrintData()
         {
+            Console.WriteLine(_outputPath + " is ready!");
             var file = _outputPath;
             Writer.Clear(file);
 
@@ -130,79 +150,61 @@ namespace Project
 
             while (currentStep < TotalSimulationSteps)
             {
-                // UpdateVehicles
-                VehicleList.Where(v => v.StepWhenWillBeFee == currentStep)
-                    .Select(veh =>
-                    {
-                        if (veh.Free == true)
-                            throw new Exception();
+                // Update Vehicle State
+                UpdateVehicleState(currentStep);
 
-                        veh.Free = true;
-                        veh.StepWhenWillBeFee = -1;
-                        veh.RealPosition = veh.SuccessfullRides.Last().EndPosition;
-                        return veh;
-                    }).ToList();
+                Ride optimalRideForCurrentStep = GetOptimalRide(currentStep);
 
-                Random rnd = new Random();
-                Ride optimalRide = RideList.FirstOrDefault(r => r.EarlyStart == currentStep);
-                if (optimalRide != null)
-                    VehicleList = VehicleList.OrderBy(v => v.CalculateDistanceToAPoint(optimalRide.InitialPosition)).ToList();
+                if (optimalRideForCurrentStep != null)
+                    VehicleList = VehicleList.OrderBy(v => v.CalculateDistanceToAPoint(optimalRideForCurrentStep.InitialPosition)).ToList();
+                // Possible improvement: always provide an optimalRideAlternative and a Vehicle Ordered list according to previous one
+
                 foreach (Vehicle v in VehicleList.Where(v => v.Free).ToList())
                 {
-                    if (RideList.Count == 0)
+                    if (!RideList.Any())
                         break;
 
-                    // Since optimalRide is declared before entering foreach, null comprobation is not enough and .Done needs to checked too
-                    Ride existingOptimal = null;
+                    /// Next ride choice for each vehicle
+                    Ride ride = (optimalRideForCurrentStep != null && optimalRideForCurrentStep.Done == false)     // Since optimalRide is declared before entering foreach, null comprobation is not enough and .Done needs to checked too here
+                        ? optimalRideForCurrentStep                         // Current behavior: chose only according to bonus give for early start
+                        : null;
 
-                    if (optimalRide != null && optimalRide.Done == false)
-                        existingOptimal = optimalRide;
+                    // Possible improvement : ride selection taking into account distance vehicle-ride init, etc. (has to do with ordering vehicleList)
+                    // Alternatives to main ride choice (already done or impossible to do)
 
-                    Ride ride = null;
-                    // Main room for improvement : ride selection taking into account distance vehicle-ride init, etc.
-
-                    //if (_inputFileName == "c_no_hurry.in")
-                    //{
-                    //    ride = /*existingOptimal ??*/ MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
-                    //}
-                    //else
-                    //{
-                    //    ride = existingOptimal;
-                    //}
-                    switch (_inputFileName)
+                    if (ride == null)   // Alternatives to optimal ride
                     {
-                        case ("b_should_be_easy.in"):
-                            ride = existingOptimal ?? RideList[rnd.Next(0, RideList.Count - 1)];
-                            break;
-                        case ("c_no_hurry.in"):
-                            ride = existingOptimal ?? MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
-                            break;
-                        case ("d_metropolis.in"):
-                            {
-                                ride = currentStep <= 0.75 * TotalSimulationSteps
-                                    ? existingOptimal ?? RideList[rnd.Next(0, RideList.Count - 1)]
-                                    : existingOptimal ?? MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
-                            }
-                            break;
-                        case ("e_high_bonus.in"):
-                            {
-                                ride = currentStep <= 0.75 * TotalSimulationSteps
-                                    ? existingOptimal ?? RideList[rnd.Next(0, RideList.Count - 1)]
-                                    : existingOptimal ?? MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
-                            }
-                            break;
-                        default:
-                            throw new Exception();
+                        switch (_inputFileName)
+                        {
+                            case ("b_should_be_easy.in"):
+                                ride = GetRandomRemainingRide();
+                                break;
+                            case ("c_no_hurry.in"):     // Deterministic output
+                                {
+                                    ride = MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
+                                }
+                                break;
+                            case ("d_metropolis.in"):
+                                {
+                                    ride = currentStep <= 0.75 * TotalSimulationSteps
+                                        ? GetRandomRemainingRide()
+                                        : MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
+                                }
+                                break;
+                            case ("e_high_bonus.in"):
+                                {
+                                    ride = currentStep <= 0.75 * TotalSimulationSteps
+                                        ? ride ?? GetRandomRemainingRide()
+                                        : ride ?? MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
+                                }
+                                break;
+                            default:
+                                throw new Exception("File behavior needs to be defined");
+                        }
                     }
 
-                    //if (currentStep <= 0.75 * TotalSimulationSteps)
-                    //    ride = existingOptimal ?? RideList[rnd.Next(0, RideList.Count - 1)];
-                    //else
-                    //    ride = existingOptimal ?? MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
-
-                    ride = ride ?? RideList[rnd.Next(0, RideList.Count - 1)];
-
-                    if (ride != null && true == ride.IsOnTimeOrAfterEarlyStart(currentStep + v.CalculateDistanceToAPoint(ride.InitialPosition)))
+                    /// Step simulation actions
+                    if (ride.IsOnTimeOrAfterEarlyStart(currentStep + v.CalculateDistanceToAPoint(ride.InitialPosition)))
                     {
                         RideList.Remove(ride);
                         ride.Distance += v.CalculateDistanceToAPoint(ride.InitialPosition);
@@ -216,6 +218,33 @@ namespace Project
                 }
                 currentStep++;
             }
+        }
+
+        private void UpdateVehicleState(long currentStep)
+        {
+#pragma warning disable S2201 // Return values from functions without side effects should not be ignored
+            VehicleList.Where(v => v.StepWhenWillBeFee == currentStep)
+                .Select(veh =>
+                {
+                    if (veh.Free == true)
+                        throw new Exception();
+
+                    veh.Free = true;
+                    veh.StepWhenWillBeFee = -1;
+                    veh.RealPosition = veh.SuccessfullRides.Last().EndPosition;
+                    return veh;
+                }).ToList();    // ToList is needed in order to evaluate the select immediately due to lazy evaluation.
+#pragma warning restore S2201 // Return values from functions without side effects should not be ignored
+        }
+
+        private Ride GetRandomRemainingRide()
+        {
+            return RideList[_rnd.Next(0, RideList.Count - 1)];
+        }
+
+        private Ride GetOptimalRide(long currentStep)
+        {
+            return RideList.FirstOrDefault(r => r.EarlyStart == currentStep);
         }
     }
 }

@@ -4,9 +4,8 @@
     {
         static void Main(string[] args)
         {
-            //Manager a_example = new Manager("a_example");
-            //a_example.Run();
-
+            Manager a_example = new Manager("a_example");
+            a_example.ExampleReproduction();
 
             Manager b_easy = new Manager("b_should_be_easy");
             b_easy.Run();
