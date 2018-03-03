@@ -146,73 +146,47 @@ namespace Project
 
             long currentStep = 0;
 
-            while (currentStep < TotalSimulationSteps)
+            while (currentStep < TotalSimulationSteps || !RideList.Any())
             {
                 // Update Vehicle State
                 UpdateVehicleState(currentStep);
 
-                Ride optimalRideForCurrentStep = GetOptimalRide(currentStep);
-
-                if (optimalRideForCurrentStep != null)
-                    VehicleList = VehicleList.OrderBy(v => v.CalculateDistanceToAPoint(optimalRideForCurrentStep.InitialPosition)).ToList();
-                // Possible improvement: always provide an optimalRideAlternative and a Vehicle Ordered list according to previous one
-
-                foreach (Vehicle v in VehicleList.Where(v => v.Free).ToList())
+                if (null == (VehicleList.FirstOrDefault(vehicle => vehicle.Free == true)))
                 {
-                    if (!RideList.Any())
+                    currentStep++;
+                    continue;
+                }
+                int iters = 0;
+                while (VehicleList.Any(v => v.Free))
+                {
+                    if (iters >= RideList.Count)
                         break;
 
-                    /// Next ride choice for each vehicle
-                    Ride ride = (optimalRideForCurrentStep != null && optimalRideForCurrentStep.Done == false)     // Since optimalRide is declared before entering foreach, null comprobation is not enough and .Done needs to checked too here
-                        ? optimalRideForCurrentStep                         // Current behavior: chose only according to bonus give for early start
-                        : null;
+                    Ride ride = RideList.ElementAt(iters);     // TODO: order RideList
+                    //Ride ride = GetRandomRemainingRide();                       // TODO
+                    //Vehicle optimalVehicleForCurrentStep = GetRandomVehicle();
 
-                    // Possible improvement : ride selection taking into account distance vehicle-ride init, etc. (has to do with ordering vehicleList)
-                    // Alternatives to main ride choice (already done or impossible to do)
+                    Vehicle optimalVehicleForCurrentStep = (VehicleList.Any(v => v.Free && v.RealPosition.X == 0 && v.RealPosition.Y == 0))
+                        ? VehicleList.FirstOrDefault(v => v.Free && v.RealPosition.X == 0 && v.RealPosition.Y == 0)
+                        : GetOptimalVehicle(ride);
 
-                    if (ride == null)   // Alternatives to optimal ride
-                    {
-                        switch (_inputFileName)
-                        {
-                            case ("b_should_be_easy.in"):
-                                ride = GetRandomRemainingRide();
-                                break;
-                            case ("c_no_hurry.in"):     // Deterministic output
-                                {
-                                    ride = MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
-                                }
-                                break;
-                            case ("d_metropolis.in"):
-                                {
-                                    ride = currentStep <= 0.75 * TotalSimulationSteps
-                                        ? GetRandomRemainingRide()
-                                        : MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
-                                }
-                                break;
-                            case ("e_high_bonus.in"):
-                                {
-                                    ride = currentStep <= 0.75 * TotalSimulationSteps
-                                        ? ride ?? GetRandomRemainingRide()
-                                        : ride ?? MoreLinq.MoreEnumerable.MinBy(RideList, r => v.CalculateDistanceToAPoint(r.InitialPosition));
-                                }
-                                break;
-                            default:
-                                throw new Exception("File behavior needs to be defined");
-                        }
-                    }
+                    //Vehicle optimalVehicleForCurrentStep = GetOptimalVehicle(ride);
 
                     /// Step simulation actions
-                    if (ride.IsOnTimeOrAfterEarlyStart(currentStep + v.CalculateDistanceToAPoint(ride.InitialPosition)))
+                    long distanceToStart = optimalVehicleForCurrentStep.CalculateDistanceToAPoint(ride.InitialPosition);
+                    if (ride.IsOnTimeOrAfterEarlyStart(currentStep + distanceToStart)) // Calculation is unnecesarily repeated
                     {
                         RideList.Remove(ride);
-                        ride.Distance += v.CalculateDistanceToAPoint(ride.InitialPosition);
+                        ride.Distance += distanceToStart; // modify distance needed?
                         ride.Done = true;
                         ride.DoneInEarlyStart = currentStep == ride.EarlyStart;
-                        v.Free = false;
-                        v.StepWhenWillBeFee = currentStep + ride.Distance;  // Including trip to position
+                        optimalVehicleForCurrentStep.Free = false;
+                        optimalVehicleForCurrentStep.StepWhenWillBeFee = currentStep + ride.Distance;  // Including trip to position
 
-                        v.SuccessfullRides.Add(ride);
+                        optimalVehicleForCurrentStep.SuccessfullRides.Add(ride);
                     }
+
+                    iters++;
                 }
                 currentStep++;
             }
@@ -240,9 +214,16 @@ namespace Project
             return RideList[_rnd.Next(0, RideList.Count - 1)];
         }
 
-        private Ride GetOptimalRide(long currentStep)
+        private Vehicle GetRandomVehicle()
         {
-            return RideList.FirstOrDefault(r => r.EarlyStart == currentStep);
+            var freeVehicles = VehicleList.Where(v => v.Free == true).ToList();
+
+            return freeVehicles[_rnd.Next(0, freeVehicles.Count - 1)];
+        }
+
+        private Vehicle GetOptimalVehicle(Ride ride)
+        {
+            return MoreLinq.MoreEnumerable.MinBy(VehicleList.Where(veh => veh.Free), v => v.CalculateDistanceToAPoint(ride.InitialPosition));
         }
     }
 }
